@@ -37,7 +37,10 @@ export default function InterviewPage() {
   }, [messages, feedbacks]);
 
   // First question on mount
+  const hasStarted = useRef(false);
   useEffect(() => {
+    if (hasStarted.current) return;
+    hasStarted.current = true;
     askNextQuestion([]);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
