@@ -75,7 +75,6 @@ export default function InterviewPage() {
     return () => {
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       if (noAnswerTimerRef.current) clearTimeout(noAnswerTimerRef.current);
-      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
     };
   }, []);
 
