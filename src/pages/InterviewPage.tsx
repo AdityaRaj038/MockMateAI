@@ -143,7 +143,7 @@ export default function InterviewPage() {
     setMessages(newMessages);
 
     if (isBlank) {
-      const blankFeedback: Feedback = { score: 0, strength: "N/A", improvement: "No answer was provided. Try to respond even with partial thoughts." };
+      const blankFeedback: Feedback = { score: 0, strength: "No response given", improvement: "Try to share your thoughts, even if you're unsure. Partial answers are better than silence." };
       setFeedbacks((prev) => [...prev, blankFeedback]);
 
       if (questionCount >= MAX_QUESTIONS) {
