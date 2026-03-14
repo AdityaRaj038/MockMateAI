@@ -14,7 +14,7 @@ type Message = { role: "user" | "assistant"; content: string };
 type Feedback = { score: number; strength: string; improvement: string };
 
 const SILENCE_TIMEOUT = 4000;
-const NO_ANSWER_TIMEOUT = 5000;
+const NO_ANSWER_TIMEOUT = 10000;
 
 export default function InterviewPage() {
   const [params] = useSearchParams();
@@ -27,13 +27,13 @@ export default function InterviewPage() {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [questionCount, setQuestionCount] = useState(0);
   const [interviewDone, setInterviewDone] = useState(false);
-  const [countdown, setCountdown] = useState<number | null>(null);
+  
 
   const { isListening, transcript, startListening, stopListening, resetTranscript, isSupported } = useSpeechRecognition();
   const scrollRef = useRef<HTMLDivElement>(null);
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const noAnswerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  
   const submittingRef = useRef(false);
   const prevTranscriptRef = useRef("");
 
@@ -57,11 +57,6 @@ export default function InterviewPage() {
         clearTimeout(noAnswerTimerRef.current);
         noAnswerTimerRef.current = null;
       }
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-        countdownIntervalRef.current = null;
-        setCountdown(null);
-      }
 
       silenceTimerRef.current = setTimeout(() => {
         if (!submittingRef.current) {
@@ -80,27 +75,13 @@ export default function InterviewPage() {
     return () => {
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       if (noAnswerTimerRef.current) clearTimeout(noAnswerTimerRef.current);
-      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
     };
   }, []);
 
   const startNoAnswerTimer = useCallback(() => {
     if (noAnswerTimerRef.current) clearTimeout(noAnswerTimerRef.current);
-    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
-
-    let remaining = Math.ceil(NO_ANSWER_TIMEOUT / 1000);
-    setCountdown(remaining);
-    countdownIntervalRef.current = setInterval(() => {
-      remaining -= 1;
-      setCountdown(remaining <= 0 ? null : remaining);
-      if (remaining <= 0 && countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-        countdownIntervalRef.current = null;
-      }
-    }, 1000);
 
     noAnswerTimerRef.current = setTimeout(() => {
-      setCountdown(null);
       if (!submittingRef.current) {
         submitAnswer("");
       }
@@ -150,8 +131,6 @@ export default function InterviewPage() {
     // Clear all timers
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     if (noAnswerTimerRef.current) clearTimeout(noAnswerTimerRef.current);
-    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
-    setCountdown(null);
 
     stopListening();
     stopSpeaking();
@@ -164,7 +143,7 @@ export default function InterviewPage() {
     setMessages(newMessages);
 
     if (isBlank) {
-      const blankFeedback: Feedback = { score: 0, strength: "N/A", improvement: "No answer was provided. Try to respond even with partial thoughts." };
+      const blankFeedback: Feedback = { score: 0, strength: "No response given", improvement: "Try to share your thoughts, even if you're unsure. Partial answers are better than silence." };
       setFeedbacks((prev) => [...prev, blankFeedback]);
 
       if (questionCount >= MAX_QUESTIONS) {
@@ -319,7 +298,7 @@ export default function InterviewPage() {
             ) : isListening ? (
               <div className="flex items-center gap-3">
                 <p className="text-sm text-muted-foreground">
-                  {transcript ? "Listening... will auto-submit after you pause" : countdown !== null ? `Waiting for answer... ${countdown}s` : "Start speaking..."}
+                  {transcript ? "Listening... will auto-submit after you pause" : "Start speaking..."}
                 </p>
                 <Button variant="ghost" size="icon" onClick={stopListening} className="rounded-full h-8 w-8">
                   <MicOff className="h-3.5 w-3.5" />
