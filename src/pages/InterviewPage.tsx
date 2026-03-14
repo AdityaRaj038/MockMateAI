@@ -86,21 +86,8 @@ export default function InterviewPage() {
 
   const startNoAnswerTimer = useCallback(() => {
     if (noAnswerTimerRef.current) clearTimeout(noAnswerTimerRef.current);
-    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
-
-    let remaining = Math.ceil(NO_ANSWER_TIMEOUT / 1000);
-    setCountdown(remaining);
-    countdownIntervalRef.current = setInterval(() => {
-      remaining -= 1;
-      setCountdown(remaining <= 0 ? null : remaining);
-      if (remaining <= 0 && countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-        countdownIntervalRef.current = null;
-      }
-    }, 1000);
 
     noAnswerTimerRef.current = setTimeout(() => {
-      setCountdown(null);
       if (!submittingRef.current) {
         submitAnswer("");
       }
