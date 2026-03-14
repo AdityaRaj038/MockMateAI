@@ -131,8 +131,6 @@ export default function InterviewPage() {
     // Clear all timers
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     if (noAnswerTimerRef.current) clearTimeout(noAnswerTimerRef.current);
-    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
-    setCountdown(null);
 
     stopListening();
     stopSpeaking();
