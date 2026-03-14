@@ -57,11 +57,6 @@ export default function InterviewPage() {
         clearTimeout(noAnswerTimerRef.current);
         noAnswerTimerRef.current = null;
       }
-      if (countdownIntervalRef.current) {
-        clearInterval(countdownIntervalRef.current);
-        countdownIntervalRef.current = null;
-        setCountdown(null);
-      }
 
       silenceTimerRef.current = setTimeout(() => {
         if (!submittingRef.current) {
