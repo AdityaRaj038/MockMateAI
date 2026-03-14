@@ -14,7 +14,7 @@ type Message = { role: "user" | "assistant"; content: string };
 type Feedback = { score: number; strength: string; improvement: string };
 
 const SILENCE_TIMEOUT = 4000;
-const NO_ANSWER_TIMEOUT = 5000;
+const NO_ANSWER_TIMEOUT = 10000;
 
 export default function InterviewPage() {
   const [params] = useSearchParams();
