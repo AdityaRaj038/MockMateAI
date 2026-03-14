@@ -33,7 +33,7 @@ export default function InterviewPage() {
   const scrollRef = useRef<HTMLDivElement>(null);
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const noAnswerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  
   const submittingRef = useRef(false);
   const prevTranscriptRef = useRef("");
 
