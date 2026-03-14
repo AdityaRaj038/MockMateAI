@@ -27,7 +27,7 @@ export default function InterviewPage() {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [questionCount, setQuestionCount] = useState(0);
   const [interviewDone, setInterviewDone] = useState(false);
-  const [countdown, setCountdown] = useState<number | null>(null);
+  
 
   const { isListening, transcript, startListening, stopListening, resetTranscript, isSupported } = useSpeechRecognition();
   const scrollRef = useRef<HTMLDivElement>(null);
