@@ -298,7 +298,7 @@ export default function InterviewPage() {
             ) : isListening ? (
               <div className="flex items-center gap-3">
                 <p className="text-sm text-muted-foreground">
-                  {transcript ? "Listening... will auto-submit after you pause" : countdown !== null ? `Waiting for answer... ${countdown}s` : "Start speaking..."}
+                  {transcript ? "Listening... will auto-submit after you pause" : "Start speaking..."}
                 </p>
                 <Button variant="ghost" size="icon" onClick={stopListening} className="rounded-full h-8 w-8">
                   <MicOff className="h-3.5 w-3.5" />
