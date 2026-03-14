@@ -26,15 +26,24 @@ export default function InterviewPage() {
   const [interviewDone, setInterviewDone] = useState(false);
 
   const { isListening, transcript, startListening, stopListening, resetTranscript, isSupported } = useSpeechRecognition();
-  const { isSpeaking, speak, stop: stopSpeaking } = useSpeechSynthesis();
   const scrollRef = useRef<HTMLDivElement>(null);
 
   const MAX_QUESTIONS = 5;
 
+  // Auto-start mic when AI finishes speaking
+  const autoStartMic = useCallback(() => {
+    if (isSupported) {
+      // Small delay to avoid overlap
+      setTimeout(() => startListening(), 400);
+    }
+  }, [isSupported, startListening]);
+
+  const { isSpeaking, speak, stop: stopSpeaking } = useSpeechSynthesis({ onEnd: autoStartMic });
+
   // Auto-scroll
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, feedbacks]);
+  }, [messages, feedbacks, transcript]);
 
   // First question on mount
   const hasStarted = useRef(false);
@@ -52,7 +61,7 @@ export default function InterviewPage() {
       setCurrentQuestion(question);
       setMessages((prev) => [...prev, { role: "assistant", content: question }]);
       setQuestionCount((c) => c + 1);
-      speak(question);
+      speak(question); // onEnd will auto-start mic
     } catch (e: any) {
       toast.error(e.message || "Failed to generate question");
     } finally {
@@ -134,6 +143,26 @@ export default function InterviewPage() {
             ))}
           </AnimatePresence>
 
+          {/* Live transcript while user is speaking */}
+          {isListening && transcript && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="flex justify-end"
+            >
+              <div className="max-w-[80%] rounded-2xl rounded-br-md bg-primary/20 border border-primary/30 px-4 py-3 text-sm text-foreground">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="relative flex h-2 w-2">
+                    <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
+                    <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
+                  </span>
+                  <span className="text-xs text-muted-foreground font-medium">Listening...</span>
+                </div>
+                {transcript}
+              </div>
+            </motion.div>
+          )}
+
           {/* Latest feedback */}
           {feedbacks.length > 0 && !interviewDone && (
             <FeedbackCard {...feedbacks[feedbacks.length - 1]} />
@@ -181,12 +210,6 @@ export default function InterviewPage() {
         <div className="border-t border-border p-4">
           <div className="mx-auto flex max-w-2xl items-center justify-center gap-4">
             <VoiceIndicator type={isSpeaking ? "speaking" : isListening ? "listening" : "idle"} />
-
-            {isListening && transcript && (
-              <div className="flex-1 rounded-xl bg-secondary/50 px-4 py-2 text-sm text-foreground max-w-md truncate">
-                {transcript}
-              </div>
-            )}
 
             {!isSupported ? (
               <p className="text-sm text-destructive">Voice not supported in this browser</p>

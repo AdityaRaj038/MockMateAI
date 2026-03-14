@@ -1,8 +1,14 @@
 import { useCallback, useRef, useState } from "react";
 
-export function useSpeechSynthesis() {
+interface UseSpeechSynthesisOptions {
+  onEnd?: () => void;
+}
+
+export function useSpeechSynthesis(options?: UseSpeechSynthesisOptions) {
   const [isSpeaking, setIsSpeaking] = useState(false);
   const utteranceRef = useRef<SpeechSynthesisUtterance | null>(null);
+  const onEndRef = useRef(options?.onEnd);
+  onEndRef.current = options?.onEnd;
 
   const speak = useCallback((text: string) => {
     window.speechSynthesis.cancel();
@@ -10,7 +16,10 @@ export function useSpeechSynthesis() {
     utterance.rate = 0.95;
     utterance.pitch = 1;
     utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      onEndRef.current?.();
+    };
     utterance.onerror = () => setIsSpeaking(false);
     utteranceRef.current = utterance;
     window.speechSynthesis.speak(utterance);
