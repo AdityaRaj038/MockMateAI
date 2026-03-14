@@ -1,12 +1,22 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Briefcase, Code, Users, ArrowRight } from "lucide-react";
+import {
+  Briefcase, Code, Users, ArrowRight, Database, Cloud,
+  Smartphone, PaintBucket, Shield, BarChart3, Cog
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 const roles = [
   { id: "Frontend Developer", icon: Code, desc: "React, JavaScript, CSS, and web fundamentals" },
-  { id: "Backend Developer", icon: Briefcase, desc: "APIs, databases, system design, and architecture" },
+  { id: "Backend Developer", icon: Database, desc: "APIs, databases, system design, and architecture" },
+  { id: "Full Stack Developer", icon: Cog, desc: "End-to-end development across the entire stack" },
+  { id: "Mobile Developer", icon: Smartphone, desc: "iOS, Android, React Native, and mobile UX" },
+  { id: "DevOps Engineer", icon: Cloud, desc: "CI/CD, cloud infrastructure, and deployment" },
+  { id: "UI/UX Designer", icon: PaintBucket, desc: "Design thinking, prototyping, and user research" },
+  { id: "Data Analyst", icon: BarChart3, desc: "SQL, data visualization, and analytical thinking" },
+  { id: "Cybersecurity", icon: Shield, desc: "Security principles, threat analysis, and best practices" },
+  { id: "Product Manager", icon: Briefcase, desc: "Strategy, roadmaps, and stakeholder management" },
   { id: "HR Interview", icon: Users, desc: "Behavioral, situational, and culture-fit questions" },
 ];
 
@@ -33,29 +43,29 @@ export default function SetupPage() {
             <p className="mt-2 text-muted-foreground">Select the role you want to practice for</p>
           </div>
 
-          <div className="space-y-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto pr-1">
             {roles.map((role) => (
               <motion.button
                 key={role.id}
                 whileHover={{ scale: 1.01 }}
                 whileTap={{ scale: 0.99 }}
                 onClick={() => setSelected(role.id)}
-                className={`glass-card flex w-full items-center gap-4 rounded-xl p-5 text-left transition-all ${
+                className={`glass-card flex w-full items-center gap-3 rounded-xl p-4 text-left transition-all ${
                   selected === role.id
                     ? "border-primary/50 glow-border"
                     : "hover:border-primary/20"
                 }`}
               >
                 <div
-                  className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg ${
+                  className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
                     selected === role.id ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
                   } transition-colors`}
                 >
                   <role.icon className="h-5 w-5" />
                 </div>
-                <div>
-                  <p className="font-display font-semibold">{role.id}</p>
-                  <p className="text-sm text-muted-foreground">{role.desc}</p>
+                <div className="min-w-0">
+                  <p className="font-display font-semibold text-sm">{role.id}</p>
+                  <p className="text-xs text-muted-foreground truncate">{role.desc}</p>
                 </div>
               </motion.button>
             ))}
