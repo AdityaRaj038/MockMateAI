@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Mic, MicOff, Send, ArrowLeft, Loader2 } from "lucide-react";
+import { MicOff, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VoiceIndicator } from "@/components/VoiceIndicator";
 import { FeedbackCard } from "@/components/FeedbackCard";
@@ -12,6 +12,9 @@ import { toast } from "sonner";
 
 type Message = { role: "user" | "assistant"; content: string };
 type Feedback = { score: number; strength: string; improvement: string };
+
+const SILENCE_TIMEOUT = 4000;
+const NO_ANSWER_TIMEOUT = 5000;
 
 export default function InterviewPage() {
   const [params] = useSearchParams();
@@ -24,26 +27,97 @@ export default function InterviewPage() {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [questionCount, setQuestionCount] = useState(0);
   const [interviewDone, setInterviewDone] = useState(false);
+  const [countdown, setCountdown] = useState<number | null>(null);
 
   const { isListening, transcript, startListening, stopListening, resetTranscript, isSupported } = useSpeechRecognition();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const noAnswerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const countdownIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const submittingRef = useRef(false);
+  const prevTranscriptRef = useRef("");
 
   const MAX_QUESTIONS = 5;
-
-  // Auto-start mic when AI finishes speaking
-  const autoStartMic = useCallback(() => {
-    if (isSupported) {
-      // Small delay to avoid overlap
-      setTimeout(() => startListening(), 400);
-    }
-  }, [isSupported, startListening]);
-
-  const { isSpeaking, speak, stop: stopSpeaking } = useSpeechSynthesis({ onEnd: autoStartMic });
 
   // Auto-scroll
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, feedbacks, transcript]);
+
+  // Silence detection: auto-submit after 4s of no new speech
+  useEffect(() => {
+    if (!isListening || !transcript.trim()) return;
+
+    // Only reset timer if transcript actually changed
+    if (transcript !== prevTranscriptRef.current) {
+      prevTranscriptRef.current = transcript;
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      // Cancel no-answer timer since user started speaking
+      if (noAnswerTimerRef.current) {
+        clearTimeout(noAnswerTimerRef.current);
+        noAnswerTimerRef.current = null;
+      }
+      if (countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+        setCountdown(null);
+      }
+
+      silenceTimerRef.current = setTimeout(() => {
+        if (!submittingRef.current) {
+          submitAnswer(transcript.trim());
+        }
+      }, SILENCE_TIMEOUT);
+    }
+
+    return () => {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    };
+  }, [transcript, isListening]);
+
+  // Cleanup timers on unmount
+  useEffect(() => {
+    return () => {
+      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+      if (noAnswerTimerRef.current) clearTimeout(noAnswerTimerRef.current);
+      if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    };
+  }, []);
+
+  const startNoAnswerTimer = useCallback(() => {
+    if (noAnswerTimerRef.current) clearTimeout(noAnswerTimerRef.current);
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+
+    let remaining = Math.ceil(NO_ANSWER_TIMEOUT / 1000);
+    setCountdown(remaining);
+    countdownIntervalRef.current = setInterval(() => {
+      remaining -= 1;
+      setCountdown(remaining <= 0 ? null : remaining);
+      if (remaining <= 0 && countdownIntervalRef.current) {
+        clearInterval(countdownIntervalRef.current);
+        countdownIntervalRef.current = null;
+      }
+    }, 1000);
+
+    noAnswerTimerRef.current = setTimeout(() => {
+      setCountdown(null);
+      if (!submittingRef.current) {
+        submitAnswer("");
+      }
+    }, NO_ANSWER_TIMEOUT);
+  }, []);
+
+  // Auto-start mic when AI finishes speaking
+  const autoStartMic = useCallback(() => {
+    if (isSupported) {
+      setTimeout(() => {
+        startListening();
+        startNoAnswerTimer();
+      }, 400);
+    }
+  }, [isSupported, startListening, startNoAnswerTimer]);
+
+  const { isSpeaking, speak, stop: stopSpeaking } = useSpeechSynthesis({ onEnd: autoStartMic });
 
   // First question on mount
   const hasStarted = useRef(false);
@@ -61,7 +135,7 @@ export default function InterviewPage() {
       setCurrentQuestion(question);
       setMessages((prev) => [...prev, { role: "assistant", content: question }]);
       setQuestionCount((c) => c + 1);
-      speak(question); // onEnd will auto-start mic
+      speak(question);
     } catch (e: any) {
       toast.error(e.message || "Failed to generate question");
     } finally {
@@ -69,17 +143,40 @@ export default function InterviewPage() {
     }
   }, [role, speak]);
 
-  const handleSubmitAnswer = useCallback(async () => {
-    if (!transcript.trim()) return;
+  const submitAnswer = useCallback(async (answer: string) => {
+    if (submittingRef.current) return;
+    submittingRef.current = true;
+
+    // Clear all timers
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    if (noAnswerTimerRef.current) clearTimeout(noAnswerTimerRef.current);
+    if (countdownIntervalRef.current) clearInterval(countdownIntervalRef.current);
+    setCountdown(null);
+
     stopListening();
     stopSpeaking();
-
-    const answer = transcript.trim();
     resetTranscript();
-    const newMessages: Message[] = [...messages, { role: "user", content: answer }];
+    prevTranscriptRef.current = "";
+
+    const isBlank = !answer.trim();
+    const displayAnswer = isBlank ? "(No answer received)" : answer;
+    const newMessages: Message[] = [...messages, { role: "user", content: displayAnswer }];
     setMessages(newMessages);
 
-    // Evaluate
+    if (isBlank) {
+      const blankFeedback: Feedback = { score: 0, strength: "N/A", improvement: "No answer was provided. Try to respond even with partial thoughts." };
+      setFeedbacks((prev) => [...prev, blankFeedback]);
+
+      if (questionCount >= MAX_QUESTIONS) {
+        setInterviewDone(true);
+        submittingRef.current = false;
+        return;
+      }
+      submittingRef.current = false;
+      await askNextQuestion(newMessages);
+      return;
+    }
+
     setIsLoading(true);
     try {
       const fb = await evaluateAnswer(role, currentQuestion, answer);
@@ -88,16 +185,18 @@ export default function InterviewPage() {
       if (questionCount >= MAX_QUESTIONS) {
         setInterviewDone(true);
         setIsLoading(false);
+        submittingRef.current = false;
         return;
       }
 
-      // Next question
+      submittingRef.current = false;
       await askNextQuestion(newMessages);
     } catch (e: any) {
       toast.error(e.message || "Failed to evaluate");
       setIsLoading(false);
+      submittingRef.current = false;
     }
-  }, [transcript, stopListening, stopSpeaking, resetTranscript, messages, role, currentQuestion, questionCount, askNextQuestion]);
+  }, [stopListening, stopSpeaking, resetTranscript, messages, role, currentQuestion, questionCount, askNextQuestion]);
 
   const averageScore = feedbacks.length
     ? Math.round((feedbacks.reduce((a, f) => a + f.score, 0) / feedbacks.length) * 10) / 10
@@ -133,7 +232,9 @@ export default function InterviewPage() {
                 <div
                   className={`max-w-[80%] rounded-2xl px-4 py-3 text-sm ${
                     msg.role === "user"
-                      ? "bg-primary text-primary-foreground rounded-br-md"
+                      ? msg.content === "(No answer received)"
+                        ? "bg-destructive/20 text-muted-foreground rounded-br-md italic"
+                        : "bg-primary text-primary-foreground rounded-br-md"
                       : "glass-card rounded-bl-md"
                   }`}
                 >
@@ -156,7 +257,7 @@ export default function InterviewPage() {
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
                   </span>
-                  <span className="text-xs text-muted-foreground font-medium">Listening...</span>
+                  <span className="text-xs text-muted-foreground font-medium">Listening... (auto-submits after pause)</span>
                 </div>
                 {transcript}
               </div>
@@ -205,7 +306,7 @@ export default function InterviewPage() {
         </motion.div>
       )}
 
-      {/* Voice controls */}
+      {/* Voice status bar */}
       {!interviewDone && (
         <div className="border-t border-border p-4">
           <div className="mx-auto flex max-w-2xl items-center justify-center gap-4">
@@ -213,31 +314,20 @@ export default function InterviewPage() {
 
             {!isSupported ? (
               <p className="text-sm text-destructive">Voice not supported in this browser</p>
+            ) : isSpeaking ? (
+              <p className="text-sm text-muted-foreground font-medium">AI is speaking...</p>
             ) : isListening ? (
-              <div className="flex gap-2">
-                <Button variant="outline" size="icon" onClick={stopListening} className="rounded-full">
-                  <MicOff className="h-4 w-4" />
-                </Button>
-                <Button
-                  size="icon"
-                  onClick={handleSubmitAnswer}
-                  disabled={!transcript.trim()}
-                  className="rounded-full"
-                >
-                  <Send className="h-4 w-4" />
+              <div className="flex items-center gap-3">
+                <p className="text-sm text-muted-foreground">
+                  {transcript ? "Listening... will auto-submit after you pause" : countdown !== null ? `Waiting for answer... ${countdown}s` : "Start speaking..."}
+                </p>
+                <Button variant="ghost" size="icon" onClick={stopListening} className="rounded-full h-8 w-8">
+                  <MicOff className="h-3.5 w-3.5" />
                 </Button>
               </div>
-            ) : (
-              <Button
-                size="lg"
-                onClick={startListening}
-                disabled={isLoading || isSpeaking}
-                className="gap-2 rounded-full px-6 font-semibold"
-              >
-                <Mic className="h-4 w-4" />
-                {isSpeaking ? "AI Speaking..." : "Answer"}
-              </Button>
-            )}
+            ) : isLoading ? (
+              <p className="text-sm text-muted-foreground">Processing...</p>
+            ) : null}
           </div>
         </div>
       )}
