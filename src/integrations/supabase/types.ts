@@ -14,7 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      interview_history: {
+        Row: {
+          average_score: number
+          created_at: string
+          feedbacks: Json
+          id: string
+          role: string
+          total_questions: number
+          user_id: string
+        }
+        Insert: {
+          average_score?: number
+          created_at?: string
+          feedbacks?: Json
+          id?: string
+          role: string
+          total_questions?: number
+          user_id: string
+        }
+        Update: {
+          average_score?: number
+          created_at?: string
+          feedbacks?: Json
+          id?: string
+          role?: string
+          total_questions?: number
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          full_name: string | null
+          id: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          full_name?: string | null
+          id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
