@@ -15,6 +15,7 @@ type Feedback = { score: number; strength: string; improvement: string };
 
 const SILENCE_TIMEOUT = 4000;
 const NO_ANSWER_TIMEOUT = 10000;
+const MAX_QUESTIONS = 8;
 
 export default function InterviewPage() {
   const [params] = useSearchParams();
@@ -27,47 +28,46 @@ export default function InterviewPage() {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [questionCount, setQuestionCount] = useState(0);
   const [interviewDone, setInterviewDone] = useState(false);
-  
 
   const { isListening, transcript, startListening, stopListening, resetTranscript, isSupported } = useSpeechRecognition();
   const scrollRef = useRef<HTMLDivElement>(null);
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const noAnswerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  
+
   const submittingRef = useRef(false);
   const prevTranscriptRef = useRef("");
+  // Use refs to avoid stale closures
+  const messagesRef = useRef<Message[]>([]);
+  const questionCountRef = useRef(0);
+  const currentQuestionRef = useRef("");
+  const interviewDoneRef = useRef(false);
 
-  const MAX_QUESTIONS = 5;
+  // Keep refs in sync
+  useEffect(() => { messagesRef.current = messages; }, [messages]);
+  useEffect(() => { questionCountRef.current = questionCount; }, [questionCount]);
+  useEffect(() => { currentQuestionRef.current = currentQuestion; }, [currentQuestion]);
+  useEffect(() => { interviewDoneRef.current = interviewDone; }, [interviewDone]);
 
   // Auto-scroll
   useEffect(() => {
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
   }, [messages, feedbacks, transcript]);
 
-  // Silence detection: auto-submit after 4s of no new speech
+  // Silence detection
   useEffect(() => {
     if (!isListening || !transcript.trim()) return;
-
-    // Only reset timer if transcript actually changed
     if (transcript !== prevTranscriptRef.current) {
       prevTranscriptRef.current = transcript;
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-      // Cancel no-answer timer since user started speaking
       if (noAnswerTimerRef.current) {
         clearTimeout(noAnswerTimerRef.current);
         noAnswerTimerRef.current = null;
       }
-
       silenceTimerRef.current = setTimeout(() => {
-        if (!submittingRef.current) {
-          submitAnswer(transcript.trim());
-        }
+        if (!submittingRef.current) submitAnswer(transcript.trim());
       }, SILENCE_TIMEOUT);
     }
-
-    return () => {
-      if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-    };
+    return () => { if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current); };
   }, [transcript, isListening]);
 
   // Cleanup timers on unmount
@@ -80,17 +80,15 @@ export default function InterviewPage() {
 
   const startNoAnswerTimer = useCallback(() => {
     if (noAnswerTimerRef.current) clearTimeout(noAnswerTimerRef.current);
-
     noAnswerTimerRef.current = setTimeout(() => {
-      if (!submittingRef.current) {
+      if (!submittingRef.current && !interviewDoneRef.current) {
         submitAnswer("");
       }
     }, NO_ANSWER_TIMEOUT);
   }, []);
 
-  // Auto-start mic when AI finishes speaking
   const autoStartMic = useCallback(() => {
-    if (isSupported) {
+    if (isSupported && !interviewDoneRef.current) {
       setTimeout(() => {
         startListening();
         startNoAnswerTimer();
@@ -114,8 +112,17 @@ export default function InterviewPage() {
     try {
       const question = await generateQuestion(role, history);
       setCurrentQuestion(question);
-      setMessages((prev) => [...prev, { role: "assistant", content: question }]);
-      setQuestionCount((c) => c + 1);
+      currentQuestionRef.current = question;
+      setMessages((prev) => {
+        const updated = [...prev, { role: "assistant" as const, content: question }];
+        messagesRef.current = updated;
+        return updated;
+      });
+      setQuestionCount((c) => {
+        const next = c + 1;
+        questionCountRef.current = next;
+        return next;
+      });
       speak(question);
     } catch (e: any) {
       toast.error(e.message || "Failed to generate question");
@@ -125,10 +132,9 @@ export default function InterviewPage() {
   }, [role, speak]);
 
   const submitAnswer = useCallback(async (answer: string) => {
-    if (submittingRef.current) return;
+    if (submittingRef.current || interviewDoneRef.current) return;
     submittingRef.current = true;
 
-    // Clear all timers
     if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
     if (noAnswerTimerRef.current) clearTimeout(noAnswerTimerRef.current);
 
@@ -139,15 +145,21 @@ export default function InterviewPage() {
 
     const isBlank = !answer.trim();
     const displayAnswer = isBlank ? "(No answer received)" : answer;
-    const newMessages: Message[] = [...messages, { role: "user", content: displayAnswer }];
+    const currentMessages = messagesRef.current;
+    const currentCount = questionCountRef.current;
+    const newMessages: Message[] = [...currentMessages, { role: "user", content: displayAnswer }];
     setMessages(newMessages);
+    messagesRef.current = newMessages;
+
+    const isLastQuestion = currentCount >= MAX_QUESTIONS;
 
     if (isBlank) {
       const blankFeedback: Feedback = { score: 0, strength: "No response given", improvement: "Try to share your thoughts, even if you're unsure. Partial answers are better than silence." };
       setFeedbacks((prev) => [...prev, blankFeedback]);
 
-      if (questionCount >= MAX_QUESTIONS) {
+      if (isLastQuestion) {
         setInterviewDone(true);
+        interviewDoneRef.current = true;
         submittingRef.current = false;
         return;
       }
@@ -158,11 +170,12 @@ export default function InterviewPage() {
 
     setIsLoading(true);
     try {
-      const fb = await evaluateAnswer(role, currentQuestion, answer);
+      const fb = await evaluateAnswer(role, currentQuestionRef.current, answer);
       setFeedbacks((prev) => [...prev, fb]);
 
-      if (questionCount >= MAX_QUESTIONS) {
+      if (isLastQuestion) {
         setInterviewDone(true);
+        interviewDoneRef.current = true;
         setIsLoading(false);
         submittingRef.current = false;
         return;
@@ -175,7 +188,7 @@ export default function InterviewPage() {
       setIsLoading(false);
       submittingRef.current = false;
     }
-  }, [stopListening, stopSpeaking, resetTranscript, messages, role, currentQuestion, questionCount, askNextQuestion]);
+  }, [stopListening, stopSpeaking, resetTranscript, role, askNextQuestion]);
 
   const averageScore = feedbacks.length
     ? Math.round((feedbacks.reduce((a, f) => a + f.score, 0) / feedbacks.length) * 10) / 10
@@ -183,7 +196,6 @@ export default function InterviewPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      {/* Header */}
       <header className="flex items-center justify-between border-b border-border px-6 py-4">
         <Button variant="ghost" size="sm" onClick={() => navigate("/setup")} className="gap-1.5 text-muted-foreground">
           <ArrowLeft className="h-4 w-4" /> Back
@@ -197,7 +209,6 @@ export default function InterviewPage() {
         <div className="w-16" />
       </header>
 
-      {/* Chat area */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
         <div className="mx-auto max-w-2xl space-y-4">
           <AnimatePresence mode="popLayout">
@@ -223,7 +234,6 @@ export default function InterviewPage() {
             ))}
           </AnimatePresence>
 
-          {/* Live transcript while user is speaking */}
           {isListening && transcript && (
             <motion.div
               initial={{ opacity: 0, y: 10 }}
@@ -243,7 +253,6 @@ export default function InterviewPage() {
             </motion.div>
           )}
 
-          {/* Latest feedback */}
           {feedbacks.length > 0 && !interviewDone && (
             <FeedbackCard {...feedbacks[feedbacks.length - 1]} />
           )}
@@ -258,7 +267,6 @@ export default function InterviewPage() {
         </div>
       </div>
 
-      {/* Interview complete */}
       {interviewDone && (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="border-t border-border p-6">
           <div className="mx-auto max-w-2xl space-y-4">
@@ -285,12 +293,10 @@ export default function InterviewPage() {
         </motion.div>
       )}
 
-      {/* Voice status bar */}
       {!interviewDone && (
         <div className="border-t border-border p-4">
           <div className="mx-auto flex max-w-2xl items-center justify-center gap-4">
             <VoiceIndicator type={isSpeaking ? "speaking" : isListening ? "listening" : "idle"} />
-
             {!isSupported ? (
               <p className="text-sm text-destructive">Voice not supported in this browser</p>
             ) : isSpeaking ? (
