@@ -3,9 +3,10 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   Briefcase, Code, Users, ArrowRight, Database, Cloud,
-  Smartphone, PaintBucket, Shield, BarChart3, Cog
+  Smartphone, PaintBucket, Shield, BarChart3, Cog,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Header } from "@/components/Header";
 
 const roles = [
   { id: "Frontend Developer", icon: Code, desc: "React, JavaScript, CSS, and web fundamentals" },
@@ -20,6 +21,15 @@ const roles = [
   { id: "HR Interview", icon: Users, desc: "Behavioral, situational, and culture-fit questions" },
 ];
 
+const container = {
+  hidden: { opacity: 0 },
+  show: { opacity: 1, transition: { staggerChildren: 0.05 } },
+};
+const item = {
+  hidden: { opacity: 0, y: 15 },
+  show: { opacity: 1, y: 0 },
+};
+
 export default function SetupPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -30,9 +40,10 @@ export default function SetupPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
+      <Header />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(38_92%_50%/0.08),transparent)]" />
 
-      <div className="relative mx-auto flex min-h-screen max-w-2xl flex-col items-center justify-center px-6 py-24">
+      <div className="relative mx-auto flex min-h-[calc(100vh-64px)] max-w-2xl flex-col items-center justify-center px-6 py-16">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -43,12 +54,18 @@ export default function SetupPage() {
             <p className="mt-2 text-muted-foreground">Select the role you want to practice for</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto pr-1">
+          <motion.div
+            variants={container}
+            initial="hidden"
+            animate="show"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto pr-1"
+          >
             {roles.map((role) => (
               <motion.button
                 key={role.id}
-                whileHover={{ scale: 1.01 }}
-                whileTap={{ scale: 0.99 }}
+                variants={item}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => setSelected(role.id)}
                 className={`glass-card flex w-full items-center gap-3 rounded-xl p-4 text-left transition-all ${
                   selected === role.id
@@ -58,7 +75,9 @@ export default function SetupPage() {
               >
                 <div
                   className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-lg ${
-                    selected === role.id ? "bg-primary text-primary-foreground" : "bg-secondary text-muted-foreground"
+                    selected === role.id
+                      ? "bg-primary text-primary-foreground"
+                      : "bg-secondary text-muted-foreground"
                   } transition-colors`}
                 >
                   <role.icon className="h-5 w-5" />
@@ -69,17 +88,19 @@ export default function SetupPage() {
                 </div>
               </motion.button>
             ))}
-          </div>
+          </motion.div>
 
-          <Button
-            size="lg"
-            disabled={!selected}
-            onClick={handleStart}
-            className="group gap-2 rounded-full px-8 font-semibold"
-          >
-            Begin Interview
-            <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Button>
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
+            <Button
+              size="lg"
+              disabled={!selected}
+              onClick={handleStart}
+              className="group gap-2 rounded-full px-8 font-semibold"
+            >
+              Begin Interview
+              <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+            </Button>
+          </motion.div>
         </motion.div>
       </div>
     </div>

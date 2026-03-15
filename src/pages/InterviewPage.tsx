@@ -5,9 +5,12 @@ import { MicOff, ArrowLeft, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VoiceIndicator } from "@/components/VoiceIndicator";
 import { FeedbackCard } from "@/components/FeedbackCard";
+import { Header } from "@/components/Header";
+import { useAuth } from "@/hooks/useAuth";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
 import { generateQuestion, evaluateAnswer } from "@/lib/interviewApi";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 type Message = { role: "user" | "assistant"; content: string };
@@ -20,6 +23,7 @@ const MAX_QUESTIONS = 8;
 export default function InterviewPage() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   const role = params.get("role") || "Frontend Developer";
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -36,13 +40,11 @@ export default function InterviewPage() {
 
   const submittingRef = useRef(false);
   const prevTranscriptRef = useRef("");
-  // Use refs to avoid stale closures
   const messagesRef = useRef<Message[]>([]);
   const questionCountRef = useRef(0);
   const currentQuestionRef = useRef("");
   const interviewDoneRef = useRef(false);
 
-  // Keep refs in sync
   useEffect(() => { messagesRef.current = messages; }, [messages]);
   useEffect(() => { questionCountRef.current = questionCount; }, [questionCount]);
   useEffect(() => { currentQuestionRef.current = currentQuestion; }, [currentQuestion]);
@@ -70,7 +72,6 @@ export default function InterviewPage() {
     return () => { if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current); };
   }, [transcript, isListening]);
 
-  // Cleanup timers on unmount
   useEffect(() => {
     return () => {
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
@@ -98,13 +99,11 @@ export default function InterviewPage() {
 
   const { isSpeaking, speak, stop: stopSpeaking } = useSpeechSynthesis({ onEnd: autoStartMic });
 
-  // First question on mount
   const hasStarted = useRef(false);
   useEffect(() => {
     if (hasStarted.current) return;
     hasStarted.current = true;
     askNextQuestion([]);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const askNextQuestion = useCallback(async (history: Message[]) => {
@@ -131,6 +130,21 @@ export default function InterviewPage() {
     }
   }, [role, speak]);
 
+  // Save interview to DB
+  const saveInterview = useCallback(async (fbs: Feedback[]) => {
+    if (!user) return;
+    const avg = fbs.length
+      ? Math.round((fbs.reduce((a, f) => a + f.score, 0) / fbs.length) * 10) / 10
+      : 0;
+    await supabase.from("interview_history").insert({
+      user_id: user.id,
+      role,
+      average_score: avg,
+      total_questions: fbs.length,
+      feedbacks: fbs as any,
+    });
+  }, [user, role]);
+
   const submitAnswer = useCallback(async (answer: string) => {
     if (submittingRef.current || interviewDoneRef.current) return;
     submittingRef.current = true;
@@ -154,13 +168,19 @@ export default function InterviewPage() {
     const isLastQuestion = currentCount >= MAX_QUESTIONS;
 
     if (isBlank) {
-      const blankFeedback: Feedback = { score: 0, strength: "No response given", improvement: "Try to share your thoughts, even if you're unsure. Partial answers are better than silence." };
-      setFeedbacks((prev) => [...prev, blankFeedback]);
+      const blankFeedback: Feedback = {
+        score: 0,
+        strength: "No response given",
+        improvement: "Try to share your thoughts, even if you're unsure. Partial answers are better than silence.",
+      };
+      const newFeedbacks = [...feedbacks, blankFeedback];
+      setFeedbacks(newFeedbacks);
 
       if (isLastQuestion) {
         setInterviewDone(true);
         interviewDoneRef.current = true;
         submittingRef.current = false;
+        saveInterview(newFeedbacks);
         return;
       }
       submittingRef.current = false;
@@ -171,13 +191,15 @@ export default function InterviewPage() {
     setIsLoading(true);
     try {
       const fb = await evaluateAnswer(role, currentQuestionRef.current, answer);
-      setFeedbacks((prev) => [...prev, fb]);
+      const newFeedbacks = [...feedbacks, fb];
+      setFeedbacks(newFeedbacks);
 
       if (isLastQuestion) {
         setInterviewDone(true);
         interviewDoneRef.current = true;
         setIsLoading(false);
         submittingRef.current = false;
+        saveInterview(newFeedbacks);
         return;
       }
 
@@ -188,7 +210,7 @@ export default function InterviewPage() {
       setIsLoading(false);
       submittingRef.current = false;
     }
-  }, [stopListening, stopSpeaking, resetTranscript, role, askNextQuestion]);
+  }, [stopListening, stopSpeaking, resetTranscript, role, askNextQuestion, feedbacks, saveInterview]);
 
   const averageScore = feedbacks.length
     ? Math.round((feedbacks.reduce((a, f) => a + f.score, 0) / feedbacks.length) * 10) / 10
@@ -196,7 +218,8 @@ export default function InterviewPage() {
 
   return (
     <div className="flex min-h-screen flex-col">
-      <header className="flex items-center justify-between border-b border-border px-6 py-4">
+      <Header />
+      <div className="flex items-center justify-between border-b border-border px-6 py-3">
         <Button variant="ghost" size="sm" onClick={() => navigate("/setup")} className="gap-1.5 text-muted-foreground">
           <ArrowLeft className="h-4 w-4" /> Back
         </Button>
@@ -207,7 +230,7 @@ export default function InterviewPage() {
           </p>
         </div>
         <div className="w-16" />
-      </header>
+      </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
         <div className="mx-auto max-w-2xl space-y-4">
@@ -235,27 +258,21 @@ export default function InterviewPage() {
           </AnimatePresence>
 
           {isListening && transcript && (
-            <motion.div
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              className="flex justify-end"
-            >
+            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="flex justify-end">
               <div className="max-w-[80%] rounded-2xl rounded-br-md bg-primary/20 border border-primary/30 px-4 py-3 text-sm text-foreground">
                 <div className="flex items-center gap-2 mb-1">
                   <span className="relative flex h-2 w-2">
                     <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
                     <span className="relative inline-flex h-2 w-2 rounded-full bg-primary" />
                   </span>
-                  <span className="text-xs text-muted-foreground font-medium">Listening... (auto-submits after pause)</span>
+                  <span className="text-xs text-muted-foreground font-medium">Listening...</span>
                 </div>
                 {transcript}
               </div>
             </motion.div>
           )}
 
-          {feedbacks.length > 0 && !interviewDone && (
-            <FeedbackCard {...feedbacks[feedbacks.length - 1]} />
-          )}
+          {feedbacks.length > 0 && !interviewDone && <FeedbackCard {...feedbacks[feedbacks.length - 1]} />}
 
           {isLoading && (
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex justify-start">
@@ -288,6 +305,11 @@ export default function InterviewPage() {
               <Button variant="outline" onClick={() => navigate("/setup")} className="rounded-full">
                 New Interview
               </Button>
+              {user && (
+                <Button onClick={() => navigate("/dashboard")} className="rounded-full">
+                  View Dashboard
+                </Button>
+              )}
             </div>
           </div>
         </motion.div>
@@ -304,7 +326,7 @@ export default function InterviewPage() {
             ) : isListening ? (
               <div className="flex items-center gap-3">
                 <p className="text-sm text-muted-foreground">
-                  {transcript ? "Listening... will auto-submit after you pause" : "Start speaking..."}
+                  {transcript ? "Listening..." : "Start speaking..."}
                 </p>
                 <Button variant="ghost" size="icon" onClick={stopListening} className="rounded-full h-8 w-8">
                   <MicOff className="h-3.5 w-3.5" />
