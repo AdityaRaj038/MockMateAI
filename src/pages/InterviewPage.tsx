@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { VoiceIndicator } from "@/components/VoiceIndicator";
 import { FeedbackCard } from "@/components/FeedbackCard";
 import { Header } from "@/components/Header";
+import { Watermark } from "@/components/Watermark";
 import { useAuth } from "@/hooks/useAuth";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
