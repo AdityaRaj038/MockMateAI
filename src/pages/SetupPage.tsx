@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
+import { Watermark } from "@/components/Watermark";
 
 const roles = [
   { id: "Frontend Developer", icon: Code, desc: "React, JavaScript, CSS, and web fundamentals" },
