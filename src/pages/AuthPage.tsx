@@ -152,6 +152,7 @@ export default function AuthPage() {
           </div>
         </motion.div>
       </div>
+      <Footer />
     </div>
   );
 }

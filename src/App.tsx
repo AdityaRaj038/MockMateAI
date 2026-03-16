@@ -10,6 +10,7 @@ import SetupPage from "./pages/SetupPage";
 import InterviewPage from "./pages/InterviewPage";
 import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
+import ReviewPage from "./pages/ReviewPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -28,6 +29,7 @@ const App = () => (
               <Route path="/interview" element={<InterviewPage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/dashboard" element={<DashboardPage />} />
+              <Route path="/review/:id" element={<ReviewPage />} />
               <Route path="*" element={<NotFound />} />
             </Routes>
           </BrowserRouter>

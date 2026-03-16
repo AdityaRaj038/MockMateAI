@@ -106,6 +106,7 @@ export default function SetupPage() {
           </motion.div>
         </motion.div>
       </div>
+      <Footer />
     </div>
   );
 }
