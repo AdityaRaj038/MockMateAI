@@ -251,7 +251,8 @@ export default function InterviewPage() {
     : 0;
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col relative">
+      <Watermark />
       <Header />
       <div className="flex items-center justify-between border-b border-border px-6 py-3">
         <Button variant="ghost" size="sm" onClick={() => navigate("/setup")} className="gap-1.5 text-muted-foreground">
