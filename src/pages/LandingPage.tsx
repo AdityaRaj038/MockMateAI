@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Mic, Brain, BarChart3, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { Watermark } from "@/components/Watermark";
 
 const features = [
