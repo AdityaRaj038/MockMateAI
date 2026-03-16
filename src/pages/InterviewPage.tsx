@@ -54,10 +54,13 @@ export default function InterviewPage() {
   useEffect(() => { interviewDoneRef.current = interviewDone; }, [interviewDone]);
   useEffect(() => { feedbacksRef.current = feedbacks; }, [feedbacks]);
 
-  // Auto-scroll
+  // Auto-scroll using bottom anchor
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, feedbacks, transcript]);
+    const timer = setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [messages, feedbacks, transcript, isLoading]);
 
   // Silence detection
   useEffect(() => {
