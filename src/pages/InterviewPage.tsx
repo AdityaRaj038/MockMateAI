@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { VoiceIndicator } from "@/components/VoiceIndicator";
 import { FeedbackCard } from "@/components/FeedbackCard";
 import { Header } from "@/components/Header";
+import { Watermark } from "@/components/Watermark";
 import { useAuth } from "@/hooks/useAuth";
 import { useSpeechRecognition } from "@/hooks/useSpeechRecognition";
 import { useSpeechSynthesis } from "@/hooks/useSpeechSynthesis";
@@ -35,6 +36,7 @@ export default function InterviewPage() {
 
   const { isListening, transcript, startListening, stopListening, resetTranscript, isSupported } = useSpeechRecognition();
   const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
   const silenceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const noAnswerTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -53,10 +55,13 @@ export default function InterviewPage() {
   useEffect(() => { interviewDoneRef.current = interviewDone; }, [interviewDone]);
   useEffect(() => { feedbacksRef.current = feedbacks; }, [feedbacks]);
 
-  // Auto-scroll
+  // Auto-scroll using bottom anchor
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages, feedbacks, transcript]);
+    const timer = setTimeout(() => {
+      bottomRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [messages, feedbacks, transcript, isLoading]);
 
   // Silence detection
   useEffect(() => {
@@ -246,7 +251,8 @@ export default function InterviewPage() {
     : 0;
 
   return (
-    <div className="flex min-h-screen flex-col">
+    <div className="flex min-h-screen flex-col relative">
+      <Watermark />
       <Header />
       <div className="flex items-center justify-between border-b border-border px-6 py-3">
         <Button variant="ghost" size="sm" onClick={() => navigate("/setup")} className="gap-1.5 text-muted-foreground">
@@ -316,6 +322,7 @@ export default function InterviewPage() {
               </div>
             </motion.div>
           )}
+          <div ref={bottomRef} />
         </div>
       </div>
 
