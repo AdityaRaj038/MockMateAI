@@ -320,6 +320,7 @@ export default function InterviewPage() {
               </div>
             </motion.div>
           )}
+          <div ref={bottomRef} />
         </div>
       </div>
 
