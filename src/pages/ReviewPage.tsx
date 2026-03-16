@@ -45,7 +45,7 @@ export default function ReviewPage() {
       .select("*")
       .eq("id", id!)
       .single();
-    setInterview(data as InterviewRecord | null);
+    setInterview(data as unknown as InterviewRecord | null);
     setLoading(false);
   };
 
