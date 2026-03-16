@@ -119,7 +119,13 @@ export default function DashboardPage() {
               </div>
             ) : (
               interviews.map((interview) => (
-                <motion.div key={interview.id} variants={item} className="glass-card rounded-xl p-4">
+                <motion.div
+                  key={interview.id}
+                  variants={item}
+                  whileHover={{ scale: 1.01 }}
+                  onClick={() => navigate(`/review/${interview.id}`)}
+                  className="glass-card rounded-xl p-4 cursor-pointer transition-all hover:border-primary/30"
+                >
                   <div className="flex items-center justify-between">
                     <div className="flex items-center gap-3">
                       <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary/10 font-display font-bold text-primary">
@@ -135,11 +141,14 @@ export default function DashboardPage() {
                         </div>
                       </div>
                     </div>
-                    <div className="h-2 w-24 rounded-full bg-secondary overflow-hidden">
-                      <div
-                        className="h-full rounded-full bg-primary transition-all"
-                        style={{ width: `${Number(interview.average_score) * 10}%` }}
-                      />
+                    <div className="flex items-center gap-3">
+                      <div className="h-2 w-24 rounded-full bg-secondary overflow-hidden">
+                        <div
+                          className="h-full rounded-full bg-primary transition-all"
+                          style={{ width: `${Number(interview.average_score) * 10}%` }}
+                        />
+                      </div>
+                      <ArrowRight className="h-4 w-4 text-muted-foreground" />
                     </div>
                   </div>
                 </motion.div>
