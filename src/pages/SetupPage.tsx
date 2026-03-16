@@ -41,6 +41,7 @@ export default function SetupPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
+      <Watermark />
       <Header />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(38_92%_50%/0.08),transparent)]" />
 

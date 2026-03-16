@@ -37,6 +37,7 @@ export default function LandingPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden">
+      <Watermark />
       <Header />
 
       {/* Ambient glow */}
