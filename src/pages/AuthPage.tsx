@@ -33,11 +33,11 @@ export default function AuthPage() {
           password,
           options: {
             data: { full_name: fullName },
-            emailRedirectTo: window.location.origin,
           },
         });
         if (error) throw error;
-        toast.success("Check your email to verify your account!");
+        toast.success("Account created! You're now signed in.");
+        navigate("/setup");
       }
     } catch (err: any) {
       toast.error(err.message || "Authentication failed");

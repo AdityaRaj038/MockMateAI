@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { MicOff, ArrowLeft, Loader2 } from "lucide-react";
+import { MicOff, ArrowLeft, Loader2, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VoiceIndicator } from "@/components/VoiceIndicator";
 import { FeedbackCard } from "@/components/FeedbackCard";
@@ -44,11 +44,14 @@ export default function InterviewPage() {
   const questionCountRef = useRef(0);
   const currentQuestionRef = useRef("");
   const interviewDoneRef = useRef(false);
+  const feedbacksRef = useRef<Feedback[]>([]);
+  const abortedRef = useRef(false);
 
   useEffect(() => { messagesRef.current = messages; }, [messages]);
   useEffect(() => { questionCountRef.current = questionCount; }, [questionCount]);
   useEffect(() => { currentQuestionRef.current = currentQuestion; }, [currentQuestion]);
   useEffect(() => { interviewDoneRef.current = interviewDone; }, [interviewDone]);
+  useEffect(() => { feedbacksRef.current = feedbacks; }, [feedbacks]);
 
   // Auto-scroll
   useEffect(() => {
@@ -72,24 +75,33 @@ export default function InterviewPage() {
     return () => { if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current); };
   }, [transcript, isListening]);
 
+  // Cleanup on unmount (back navigation)
   useEffect(() => {
     return () => {
+      abortedRef.current = true;
       if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
       if (noAnswerTimerRef.current) clearTimeout(noAnswerTimerRef.current);
     };
   }, []);
 
+  const clearAllTimers = useCallback(() => {
+    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
+    if (noAnswerTimerRef.current) clearTimeout(noAnswerTimerRef.current);
+    silenceTimerRef.current = null;
+    noAnswerTimerRef.current = null;
+  }, []);
+
   const startNoAnswerTimer = useCallback(() => {
     if (noAnswerTimerRef.current) clearTimeout(noAnswerTimerRef.current);
     noAnswerTimerRef.current = setTimeout(() => {
-      if (!submittingRef.current && !interviewDoneRef.current) {
+      if (!submittingRef.current && !interviewDoneRef.current && !abortedRef.current) {
         submitAnswer("");
       }
     }, NO_ANSWER_TIMEOUT);
   }, []);
 
   const autoStartMic = useCallback(() => {
-    if (isSupported && !interviewDoneRef.current) {
+    if (isSupported && !interviewDoneRef.current && !abortedRef.current) {
       setTimeout(() => {
         startListening();
         startNoAnswerTimer();
@@ -107,9 +119,11 @@ export default function InterviewPage() {
   }, []);
 
   const askNextQuestion = useCallback(async (history: Message[]) => {
+    if (abortedRef.current) return;
     setIsLoading(true);
     try {
       const question = await generateQuestion(role, history);
+      if (abortedRef.current) return;
       setCurrentQuestion(question);
       currentQuestionRef.current = question;
       setMessages((prev) => {
@@ -124,13 +138,12 @@ export default function InterviewPage() {
       });
       speak(question);
     } catch (e: any) {
-      toast.error(e.message || "Failed to generate question");
+      if (!abortedRef.current) toast.error(e.message || "Failed to generate question");
     } finally {
       setIsLoading(false);
     }
   }, [role, speak]);
 
-  // Save interview to DB
   const saveInterview = useCallback(async (fbs: Feedback[]) => {
     if (!user) return;
     const avg = fbs.length
@@ -145,13 +158,30 @@ export default function InterviewPage() {
     });
   }, [user, role]);
 
+  const finishInterview = useCallback((fbs: Feedback[]) => {
+    setInterviewDone(true);
+    interviewDoneRef.current = true;
+    clearAllTimers();
+    stopListening();
+    stopSpeaking();
+    saveInterview(fbs);
+  }, [clearAllTimers, stopListening, stopSpeaking, saveInterview]);
+
+  const handleEndInterview = useCallback(() => {
+    if (interviewDoneRef.current) return;
+    submittingRef.current = false;
+    clearAllTimers();
+    stopListening();
+    stopSpeaking();
+    resetTranscript();
+    finishInterview(feedbacksRef.current);
+  }, [clearAllTimers, stopListening, stopSpeaking, resetTranscript, finishInterview]);
+
   const submitAnswer = useCallback(async (answer: string) => {
-    if (submittingRef.current || interviewDoneRef.current) return;
+    if (submittingRef.current || interviewDoneRef.current || abortedRef.current) return;
     submittingRef.current = true;
 
-    if (silenceTimerRef.current) clearTimeout(silenceTimerRef.current);
-    if (noAnswerTimerRef.current) clearTimeout(noAnswerTimerRef.current);
-
+    clearAllTimers();
     stopListening();
     stopSpeaking();
     resetTranscript();
@@ -173,14 +203,13 @@ export default function InterviewPage() {
         strength: "No response given",
         improvement: "Try to share your thoughts, even if you're unsure. Partial answers are better than silence.",
       };
-      const newFeedbacks = [...feedbacks, blankFeedback];
+      const newFeedbacks = [...feedbacksRef.current, blankFeedback];
       setFeedbacks(newFeedbacks);
+      feedbacksRef.current = newFeedbacks;
 
       if (isLastQuestion) {
-        setInterviewDone(true);
-        interviewDoneRef.current = true;
         submittingRef.current = false;
-        saveInterview(newFeedbacks);
+        finishInterview(newFeedbacks);
         return;
       }
       submittingRef.current = false;
@@ -191,26 +220,26 @@ export default function InterviewPage() {
     setIsLoading(true);
     try {
       const fb = await evaluateAnswer(role, currentQuestionRef.current, answer);
-      const newFeedbacks = [...feedbacks, fb];
+      if (abortedRef.current) return;
+      const newFeedbacks = [...feedbacksRef.current, fb];
       setFeedbacks(newFeedbacks);
+      feedbacksRef.current = newFeedbacks;
 
       if (isLastQuestion) {
-        setInterviewDone(true);
-        interviewDoneRef.current = true;
         setIsLoading(false);
         submittingRef.current = false;
-        saveInterview(newFeedbacks);
+        finishInterview(newFeedbacks);
         return;
       }
 
       submittingRef.current = false;
       await askNextQuestion(newMessages);
     } catch (e: any) {
-      toast.error(e.message || "Failed to evaluate");
+      if (!abortedRef.current) toast.error(e.message || "Failed to evaluate");
       setIsLoading(false);
       submittingRef.current = false;
     }
-  }, [stopListening, stopSpeaking, resetTranscript, role, askNextQuestion, feedbacks, saveInterview]);
+  }, [stopListening, stopSpeaking, resetTranscript, role, askNextQuestion, finishInterview, clearAllTimers]);
 
   const averageScore = feedbacks.length
     ? Math.round((feedbacks.reduce((a, f) => a + f.score, 0) / feedbacks.length) * 10) / 10
@@ -229,7 +258,13 @@ export default function InterviewPage() {
             Question {Math.min(questionCount, MAX_QUESTIONS)} / {MAX_QUESTIONS}
           </p>
         </div>
-        <div className="w-16" />
+        {!interviewDone ? (
+          <Button variant="destructive" size="sm" onClick={handleEndInterview} className="gap-1.5 rounded-full">
+            <Square className="h-3.5 w-3.5" /> End
+          </Button>
+        ) : (
+          <div className="w-16" />
+        )}
       </div>
 
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-4 py-6">
