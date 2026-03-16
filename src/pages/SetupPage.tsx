@@ -7,6 +7,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { Watermark } from "@/components/Watermark";
 
 const roles = [
@@ -105,6 +106,7 @@ export default function SetupPage() {
           </motion.div>
         </motion.div>
       </div>
+      <Footer />
     </div>
   );
 }
