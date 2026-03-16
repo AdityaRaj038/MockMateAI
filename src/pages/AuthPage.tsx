@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Header } from "@/components/Header";
+import { Footer } from "@/components/Footer";
 import { Watermark } from "@/components/Watermark";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
