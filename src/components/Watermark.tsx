@@ -6,7 +6,7 @@ export function Watermark() {
       <img
         src={logo}
         alt=""
-        className="h-[40vh] w-[40vh] max-h-[400px] max-w-[400px] opacity-[0.03] select-none"
+        className="h-[40vh] w-[40vh] max-h-[400px] max-w-[400px] opacity-[0.03] dark:opacity-[0.03] select-none dark:invert-0 invert"
         draggable={false}
       />
     </div>

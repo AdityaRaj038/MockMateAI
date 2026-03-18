@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Watermark } from "@/components/Watermark";
+import { useAuth } from "@/hooks/useAuth";
 
 const roles = [
   { id: "Frontend Developer", icon: Code, desc: "React, JavaScript, CSS, and web fundamentals" },
@@ -35,6 +36,13 @@ const item = {
 export default function SetupPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/auth");
+    }
+  }, [user, loading, navigate]);
 
   const handleStart = () => {
     if (selected) navigate(`/interview?role=${encodeURIComponent(selected)}`);

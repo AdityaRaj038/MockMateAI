@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Watermark } from "@/components/Watermark";
+import { useAuth } from "@/hooks/useAuth";
 
 const features = [
   {
@@ -35,6 +36,15 @@ const item = {
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleStart = () => {
+    if (user) {
+      navigate("/setup");
+    } else {
+      navigate("/auth");
+    }
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden">
@@ -80,7 +90,7 @@ export default function LandingPage() {
           >
             <Button
               size="lg"
-              onClick={() => navigate("/setup")}
+              onClick={handleStart}
               className="group gap-2 rounded-full px-8 text-base font-semibold"
             >
               Start Interview
