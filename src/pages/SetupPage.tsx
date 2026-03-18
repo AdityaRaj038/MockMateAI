@@ -33,8 +33,15 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
+const difficulties = [
+  { id: "easy", label: "Easy", desc: "Beginner-friendly questions", color: "text-green-500" },
+  { id: "medium", label: "Medium", desc: "Intermediate-level challenges", color: "text-yellow-500" },
+  { id: "hard", label: "Hard", desc: "Advanced & tricky questions", color: "text-red-500" },
+];
+
 export default function SetupPage() {
   const [selected, setSelected] = useState<string | null>(null);
+  const [difficulty, setDifficulty] = useState("medium");
   const navigate = useNavigate();
   const { user, loading } = useAuth();
 
