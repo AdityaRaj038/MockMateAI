@@ -108,6 +108,29 @@ export default function SetupPage() {
             ))}
           </motion.div>
 
+          {/* Difficulty */}
+          <div className="space-y-3">
+            <h2 className="font-display text-lg font-semibold">Difficulty Level</h2>
+            <div className="flex gap-3 justify-center">
+              {difficulties.map((d) => (
+                <motion.button
+                  key={d.id}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setDifficulty(d.id)}
+                  className={`glass-card rounded-xl px-5 py-3 text-center transition-all ${
+                    difficulty === d.id
+                      ? "border-primary/50 glow-border"
+                      : "hover:border-primary/20"
+                  }`}
+                >
+                  <p className={`font-display font-bold text-sm ${d.color}`}>{d.label}</p>
+                  <p className="text-xs text-muted-foreground">{d.desc}</p>
+                </motion.button>
+              ))}
+            </div>
+          </div>
+
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
             <Button
               size="lg"
