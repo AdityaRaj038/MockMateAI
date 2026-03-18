@@ -36,6 +36,13 @@ const item = {
 export default function SetupPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      navigate("/auth");
+    }
+  }, [user, loading, navigate]);
 
   const handleStart = () => {
     if (selected) navigate(`/interview?role=${encodeURIComponent(selected)}`);
