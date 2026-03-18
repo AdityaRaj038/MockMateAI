@@ -26,6 +26,7 @@ export default function InterviewPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const role = params.get("role") || "Frontend Developer";
+  const difficulty = params.get("difficulty") || "medium";
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState("");
