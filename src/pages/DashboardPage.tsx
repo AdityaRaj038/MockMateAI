@@ -102,8 +102,9 @@ export default function DashboardPage() {
           </motion.div>
 
           {/* Stats */}
-          <motion.div variants={container} initial="hidden" animate="show" className="grid gap-4 sm:grid-cols-3">
+          <motion.div variants={container} initial="hidden" animate="show" className="grid gap-4 sm:grid-cols-4">
             {[
+              { icon: Flame, label: "Streak", value: `${streak} day${streak !== 1 ? "s" : ""}`, color: "text-orange-500" },
               { icon: Trophy, label: "Interviews", value: interviews.length, color: "text-primary" },
               { icon: Target, label: "Avg Score", value: `${overallAvg}/10`, color: "text-primary" },
               { icon: TrendingUp, label: "Best Score", value: `${bestScore}/10`, color: "text-primary" },
