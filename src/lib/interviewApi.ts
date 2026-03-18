@@ -17,8 +17,8 @@ async function invokeWithRetry(body: Record<string, unknown>, retries = 2): Prom
   }
 }
 
-export async function generateQuestion(role: string, messages: Message[]): Promise<string> {
-  const data = await invokeWithRetry({ action: "generate_question", role, messages });
+export async function generateQuestion(role: string, messages: Message[], difficulty?: string): Promise<string> {
+  const data = await invokeWithRetry({ action: "generate_question", role, messages, difficulty: difficulty || "medium" });
   return data.content;
 }
 
