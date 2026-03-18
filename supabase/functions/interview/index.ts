@@ -18,7 +18,7 @@ serve(async (req) => {
     let systemPrompt = "";
 
     if (action === "generate_question") {
-      systemPrompt = `You are an expert interviewer conducting a ${role} interview. You simulate a real human interviewer — professional, adaptive, and insightful.
+      systemPrompt = `You are an expert interviewer conducting a ${role} interview at a ${difficultyLabel} difficulty level. You simulate a real human interviewer — professional, adaptive, and insightful.
 
 Rules:
 - Ask ONE question at a time
