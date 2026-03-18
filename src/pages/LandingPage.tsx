@@ -90,7 +90,7 @@ export default function LandingPage() {
           >
             <Button
               size="lg"
-              onClick={() => navigate("/setup")}
+              onClick={handleStart}
               className="group gap-2 rounded-full px-8 text-base font-semibold"
             >
               Start Interview
