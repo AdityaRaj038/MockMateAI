@@ -64,6 +64,14 @@ export function Header() {
               <Button
                 variant="ghost"
                 size="icon"
+                onClick={() => navigate("/profile")}
+                className="rounded-full"
+              >
+                <User className="h-4 w-4" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={handleSignOut}
                 className="rounded-full"
               >
