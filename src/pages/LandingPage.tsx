@@ -36,6 +36,15 @@ const item = {
 
 export default function LandingPage() {
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const handleStart = () => {
+    if (user) {
+      navigate("/setup");
+    } else {
+      navigate("/auth");
+    }
+  };
 
   return (
     <div className="relative min-h-screen overflow-hidden">
