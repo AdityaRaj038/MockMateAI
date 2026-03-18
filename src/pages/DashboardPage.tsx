@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Trophy, Target, Clock, TrendingUp } from "lucide-react";
+import { ArrowRight, Trophy, Target, Clock, TrendingUp, Flame } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -49,6 +49,25 @@ export default function DashboardPage() {
     ? Math.max(...interviews.map((i) => Number(i.average_score)))
     : 0;
 
+  const streak = useMemo(() => {
+    if (!interviews.length) return 0;
+    const days = new Set(
+      interviews.map((i) => new Date(i.created_at).toDateString())
+    );
+    let count = 0;
+    const d = new Date();
+    // Check if today or yesterday starts the streak
+    if (!days.has(d.toDateString())) {
+      d.setDate(d.getDate() - 1);
+      if (!days.has(d.toDateString())) return 0;
+    }
+    while (days.has(d.toDateString())) {
+      count++;
+      d.setDate(d.getDate() - 1);
+    }
+    return count;
+  }, [interviews]);
+
   const container = {
     hidden: { opacity: 0 },
     show: { opacity: 1, transition: { staggerChildren: 0.1 } },
@@ -83,8 +102,9 @@ export default function DashboardPage() {
           </motion.div>
 
           {/* Stats */}
-          <motion.div variants={container} initial="hidden" animate="show" className="grid gap-4 sm:grid-cols-3">
+          <motion.div variants={container} initial="hidden" animate="show" className="grid gap-4 sm:grid-cols-4">
             {[
+              { icon: Flame, label: "Streak", value: `${streak} day${streak !== 1 ? "s" : ""}`, color: "text-orange-500" },
               { icon: Trophy, label: "Interviews", value: interviews.length, color: "text-primary" },
               { icon: Target, label: "Avg Score", value: `${overallAvg}/10`, color: "text-primary" },
               { icon: TrendingUp, label: "Best Score", value: `${bestScore}/10`, color: "text-primary" },

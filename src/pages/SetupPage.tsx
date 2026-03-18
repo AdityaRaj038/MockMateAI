@@ -33,8 +33,15 @@ const item = {
   show: { opacity: 1, y: 0 },
 };
 
+const difficulties = [
+  { id: "easy", label: "Easy", desc: "Beginner-friendly questions", color: "text-green-500" },
+  { id: "medium", label: "Medium", desc: "Intermediate-level challenges", color: "text-yellow-500" },
+  { id: "hard", label: "Hard", desc: "Advanced & tricky questions", color: "text-red-500" },
+];
+
 export default function SetupPage() {
   const [selected, setSelected] = useState<string | null>(null);
+  const [difficulty, setDifficulty] = useState("medium");
   const navigate = useNavigate();
   const { user, loading } = useAuth();
 
@@ -45,7 +52,7 @@ export default function SetupPage() {
   }, [user, loading, navigate]);
 
   const handleStart = () => {
-    if (selected) navigate(`/interview?role=${encodeURIComponent(selected)}`);
+    if (selected) navigate(`/interview?role=${encodeURIComponent(selected)}&difficulty=${difficulty}`);
   };
 
   return (
@@ -100,6 +107,29 @@ export default function SetupPage() {
               </motion.button>
             ))}
           </motion.div>
+
+          {/* Difficulty */}
+          <div className="space-y-3">
+            <h2 className="font-display text-lg font-semibold">Difficulty Level</h2>
+            <div className="flex gap-3 justify-center">
+              {difficulties.map((d) => (
+                <motion.button
+                  key={d.id}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => setDifficulty(d.id)}
+                  className={`glass-card rounded-xl px-5 py-3 text-center transition-all ${
+                    difficulty === d.id
+                      ? "border-primary/50 glow-border"
+                      : "hover:border-primary/20"
+                  }`}
+                >
+                  <p className={`font-display font-bold text-sm ${d.color}`}>{d.label}</p>
+                  <p className="text-xs text-muted-foreground">{d.desc}</p>
+                </motion.button>
+              ))}
+            </div>
+          </div>
 
           <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.4 }}>
             <Button

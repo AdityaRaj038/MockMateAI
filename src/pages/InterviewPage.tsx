@@ -26,6 +26,7 @@ export default function InterviewPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
   const role = params.get("role") || "Frontend Developer";
+  const difficulty = params.get("difficulty") || "medium";
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [currentQuestion, setCurrentQuestion] = useState("");
@@ -127,7 +128,7 @@ export default function InterviewPage() {
     if (abortedRef.current) return;
     setIsLoading(true);
     try {
-      const question = await generateQuestion(role, history);
+      const question = await generateQuestion(role, history, difficulty);
       if (abortedRef.current) return;
       setCurrentQuestion(question);
       currentQuestionRef.current = question;
