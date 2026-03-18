@@ -52,7 +52,7 @@ export default function SetupPage() {
   }, [user, loading, navigate]);
 
   const handleStart = () => {
-    if (selected) navigate(`/interview?role=${encodeURIComponent(selected)}`);
+    if (selected) navigate(`/interview?role=${encodeURIComponent(selected)}&difficulty=${difficulty}`);
   };
 
   return (
