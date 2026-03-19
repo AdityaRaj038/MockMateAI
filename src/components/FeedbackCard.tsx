@@ -1,13 +1,14 @@
 import { motion } from "framer-motion";
-import { TrendingUp, AlertCircle } from "lucide-react";
+import { TrendingUp, AlertCircle, Eye } from "lucide-react";
 
 interface FeedbackCardProps {
   score: number;
   strength: string;
   improvement: string;
+  intention?: string;
 }
 
-export function FeedbackCard({ score, strength, improvement }: FeedbackCardProps) {
+export function FeedbackCard({ score, strength, improvement, intention }: FeedbackCardProps) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -40,6 +41,15 @@ export function FeedbackCard({ score, strength, improvement }: FeedbackCardProps
           <AlertCircle className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
           <p className="text-sm text-foreground">{improvement}</p>
         </div>
+        {intention && (
+          <div className="flex items-start gap-2 pt-1 border-t border-border mt-2">
+            <Eye className="mt-0.5 h-4 w-4 shrink-0 text-violet-400" />
+            <div>
+              <p className="text-xs font-semibold text-muted-foreground mb-0.5">What the interviewer was testing</p>
+              <p className="text-sm text-foreground">{intention}</p>
+            </div>
+          </div>
+        )}
       </div>
     </motion.div>
   );

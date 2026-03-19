@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 type Message = { role: "user" | "assistant"; content: string };
-type Feedback = { score: number; strength: string; improvement: string };
+type Feedback = { score: number; strength: string; improvement: string; intention: string };
 
 const SILENCE_TIMEOUT = 4000;
 const NO_ANSWER_TIMEOUT = 10000;
@@ -34,6 +34,7 @@ export default function InterviewPage() {
   const [feedbacks, setFeedbacks] = useState<Feedback[]>([]);
   const [questionCount, setQuestionCount] = useState(0);
   const [interviewDone, setInterviewDone] = useState(false);
+  const resumeContext = useRef(sessionStorage.getItem("interview_resume") || "");
 
   const { isListening, transcript, startListening, stopListening, resetTranscript, isSupported } = useSpeechRecognition();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -128,7 +129,7 @@ export default function InterviewPage() {
     if (abortedRef.current) return;
     setIsLoading(true);
     try {
-      const question = await generateQuestion(role, history, difficulty);
+      const question = await generateQuestion(role, history, difficulty, resumeContext.current);
       if (abortedRef.current) return;
       setCurrentQuestion(question);
       currentQuestionRef.current = question;
@@ -208,6 +209,7 @@ export default function InterviewPage() {
         score: 0,
         strength: "No response given",
         improvement: "Try to share your thoughts, even if you're unsure. Partial answers are better than silence.",
+        intention: "Could not evaluate — no answer was provided.",
       };
       const newFeedbacks = [...feedbacksRef.current, blankFeedback];
       setFeedbacks(newFeedbacks);
