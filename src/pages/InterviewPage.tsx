@@ -209,6 +209,7 @@ export default function InterviewPage() {
         score: 0,
         strength: "No response given",
         improvement: "Try to share your thoughts, even if you're unsure. Partial answers are better than silence.",
+        intention: "Could not evaluate — no answer was provided.",
       };
       const newFeedbacks = [...feedbacksRef.current, blankFeedback];
       setFeedbacks(newFeedbacks);
