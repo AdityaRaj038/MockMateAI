@@ -10,15 +10,19 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { action, role, messages, difficulty } = await req.json();
+    const { action, role, messages, difficulty, resumeContext } = await req.json();
     const difficultyLabel = difficulty === "easy" ? "beginner-friendly, straightforward" : difficulty === "hard" ? "advanced, complex, and tricky" : "intermediate-level";
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
+    const resumeSection = resumeContext
+      ? `\n\nThe candidate has provided their resume. Use this to ask TARGETED questions about their specific skills, projects, and experience:\n---\n${resumeContext}\n---\nTailor questions to their background while still covering the ${role} domain.`
+      : "";
+
     let systemPrompt = "";
 
     if (action === "generate_question") {
-      systemPrompt = `You are an expert interviewer conducting a ${role} interview at a ${difficultyLabel} difficulty level. You simulate a real human interviewer — professional, adaptive, and insightful.
+      systemPrompt = `You are an expert interviewer conducting a ${role} interview at a ${difficultyLabel} difficulty level. You simulate a real human interviewer — professional, adaptive, and insightful.${resumeSection}
 
 Rules:
 - Ask ONE question at a time
@@ -30,7 +34,7 @@ Rules:
 - Be conversational but professional
 - If this is the first message, greet the candidate briefly and ask your first question
 - If the candidate did not answer (said nothing), move on to a NEW different topic — do not repeat or rephrase the unanswered question
-- ONLY output the question text, nothing else`;
+- ONLY output the question text, nothing else${resumeContext ? "\n- Reference specific skills, projects, or experiences from the candidate's resume when relevant" : ""}`;
     } else if (action === "evaluate_answer") {
       systemPrompt = `You are an expert interview evaluator for a ${role} position. Evaluate the candidate's answer.
 
@@ -38,7 +42,8 @@ You MUST respond with ONLY a valid JSON object in this exact format, no other te
 {
   "score": <number 1-10>,
   "strength": "<one specific strength in 1 sentence>",
-  "improvement": "<one specific improvement suggestion in 1 sentence>"
+  "improvement": "<one specific improvement suggestion in 1 sentence>",
+  "intention": "<what the interviewer was actually testing with this question — the hidden skill, trait, or knowledge area being evaluated, in 1-2 sentences>"
 }`;
     }
 

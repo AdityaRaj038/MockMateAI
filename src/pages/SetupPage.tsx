@@ -1,15 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   Briefcase, Code, Users, ArrowRight, Database, Cloud,
   Smartphone, PaintBucket, Shield, BarChart3, Cog,
+  Upload, FileText, X, Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Watermark } from "@/components/Watermark";
 import { useAuth } from "@/hooks/useAuth";
+import { extractTextFromFile } from "@/lib/resumeParser";
+import { toast } from "sonner";
 
 const roles = [
   { id: "Frontend Developer", icon: Code, desc: "React, JavaScript, CSS, and web fundamentals" },
@@ -42,6 +45,10 @@ const difficulties = [
 export default function SetupPage() {
   const [selected, setSelected] = useState<string | null>(null);
   const [difficulty, setDifficulty] = useState("medium");
+  const [resumeFile, setResumeFile] = useState<File | null>(null);
+  const [resumeText, setResumeText] = useState("");
+  const [parsing, setParsing] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const navigate = useNavigate();
   const { user, loading } = useAuth();
 
@@ -51,8 +58,56 @@ export default function SetupPage() {
     }
   }, [user, loading, navigate]);
 
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const ext = file.name.split(".").pop()?.toLowerCase();
+    if (!["pdf", "docx", "txt"].includes(ext || "")) {
+      toast.error("Please upload a PDF, DOCX, or TXT file");
+      return;
+    }
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error("File size must be under 10MB");
+      return;
+    }
+
+    setResumeFile(file);
+    setParsing(true);
+    try {
+      const text = await extractTextFromFile(file);
+      if (!text.trim()) {
+        toast.error("Could not extract text from this file. Try a different format.");
+        setResumeFile(null);
+        setResumeText("");
+      } else {
+        setResumeText(text.slice(0, 5000)); // Limit to 5000 chars
+        toast.success("Resume parsed successfully!");
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to parse resume");
+      setResumeFile(null);
+      setResumeText("");
+    } finally {
+      setParsing(false);
+    }
+  };
+
+  const removeResume = () => {
+    setResumeFile(null);
+    setResumeText("");
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
   const handleStart = () => {
-    if (selected) navigate(`/interview?role=${encodeURIComponent(selected)}&difficulty=${difficulty}`);
+    if (!selected) return;
+    // Store resume in sessionStorage so InterviewPage can access it
+    if (resumeText) {
+      sessionStorage.setItem("interview_resume", resumeText);
+    } else {
+      sessionStorage.removeItem("interview_resume");
+    }
+    navigate(`/interview?role=${encodeURIComponent(selected)}&difficulty=${difficulty}`);
   };
 
   return (
@@ -72,11 +127,76 @@ export default function SetupPage() {
             <p className="mt-2 text-muted-foreground">Select the role you want to practice for</p>
           </div>
 
+          {/* Resume Upload */}
+          <div className="space-y-3">
+            <h2 className="font-display text-lg font-semibold flex items-center justify-center gap-2">
+              <FileText className="h-5 w-5 text-primary" />
+              Upload Resume <span className="text-xs text-muted-foreground font-normal">(optional)</span>
+            </h2>
+            <p className="text-xs text-muted-foreground">AI will generate targeted questions based on your resume</p>
+
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept=".pdf,.docx,.txt"
+              onChange={handleFileUpload}
+              className="hidden"
+            />
+
+            <AnimatePresence mode="wait">
+              {resumeFile ? (
+                <motion.div
+                  key="uploaded"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className="glass-card rounded-xl p-4 flex items-center justify-between gap-3"
+                >
+                  <div className="flex items-center gap-3 min-w-0">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-primary/10">
+                      <FileText className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0 text-left">
+                      <p className="font-medium text-sm truncate">{resumeFile.name}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {parsing ? "Parsing..." : `${resumeText.length} characters extracted`}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    {parsing && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                    <Button variant="ghost" size="icon" onClick={removeResume} className="h-8 w-8 rounded-full">
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.button
+                  key="upload"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  whileHover={{ scale: 1.02 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => fileInputRef.current?.click()}
+                  className="glass-card w-full rounded-xl p-6 border-dashed border-2 border-border hover:border-primary/40 transition-colors flex flex-col items-center gap-2"
+                >
+                  <Upload className="h-8 w-8 text-muted-foreground" />
+                  <p className="text-sm text-muted-foreground">
+                    Drop your resume here or <span className="text-primary font-medium">browse</span>
+                  </p>
+                  <p className="text-xs text-muted-foreground">PDF, DOCX, or TXT (max 10MB)</p>
+                </motion.button>
+              )}
+            </AnimatePresence>
+          </div>
+
+          {/* Roles */}
           <motion.div
             variants={container}
             initial="hidden"
             animate="show"
-            className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[60vh] overflow-y-auto pr-1"
+            className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[40vh] overflow-y-auto pr-1"
           >
             {roles.map((role) => (
               <motion.button

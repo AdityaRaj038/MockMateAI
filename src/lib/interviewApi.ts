@@ -11,14 +11,24 @@ async function invokeWithRetry(body: Record<string, unknown>, retries = 2): Prom
       return data;
     } catch (e: any) {
       if (i === retries) throw e;
-      // Wait before retry (cold start recovery)
       await new Promise((r) => setTimeout(r, 1500));
     }
   }
 }
 
-export async function generateQuestion(role: string, messages: Message[], difficulty?: string): Promise<string> {
-  const data = await invokeWithRetry({ action: "generate_question", role, messages, difficulty: difficulty || "medium" });
+export async function generateQuestion(
+  role: string,
+  messages: Message[],
+  difficulty?: string,
+  resumeContext?: string
+): Promise<string> {
+  const data = await invokeWithRetry({
+    action: "generate_question",
+    role,
+    messages,
+    difficulty: difficulty || "medium",
+    resumeContext: resumeContext || undefined,
+  });
   return data.content;
 }
 
@@ -26,6 +36,7 @@ export async function evaluateAnswer(role: string, question: string, answer: str
   score: number;
   strength: string;
   improvement: string;
+  intention: string;
 }> {
   const data = await invokeWithRetry({
     action: "evaluate_answer",
@@ -38,6 +49,6 @@ export async function evaluateAnswer(role: string, question: string, answer: str
     const cleaned = data.content.replace(/```json\n?/g, "").replace(/```\n?/g, "").trim();
     return JSON.parse(cleaned);
   } catch {
-    return { score: 5, strength: "Answer provided", improvement: "Could elaborate more" };
+    return { score: 5, strength: "Answer provided", improvement: "Could elaborate more", intention: "General knowledge assessment" };
   }
 }
