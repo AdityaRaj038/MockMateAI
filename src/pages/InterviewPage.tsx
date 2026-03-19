@@ -129,7 +129,7 @@ export default function InterviewPage() {
     if (abortedRef.current) return;
     setIsLoading(true);
     try {
-      const question = await generateQuestion(role, history, difficulty);
+      const question = await generateQuestion(role, history, difficulty, resumeContext.current);
       if (abortedRef.current) return;
       setCurrentQuestion(question);
       currentQuestionRef.current = question;
