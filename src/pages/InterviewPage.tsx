@@ -15,7 +15,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 type Message = { role: "user" | "assistant"; content: string };
-type Feedback = { score: number; strength: string; improvement: string };
+type Feedback = { score: number; strength: string; improvement: string; intention: string };
 
 const SILENCE_TIMEOUT = 4000;
 const NO_ANSWER_TIMEOUT = 10000;
