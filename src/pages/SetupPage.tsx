@@ -81,8 +81,31 @@ export default function SetupPage() {
         setResumeFile(null);
         setResumeText("");
       } else {
-        setResumeText(text.slice(0, 5000)); // Limit to 5000 chars
+        setResumeText(text.slice(0, 5000));
         toast.success("Resume parsed successfully!");
+        // Auto-detect role from resume content
+        if (!selected) {
+          const lower = text.toLowerCase();
+          const matched = roles.find((r) => {
+            const keywords: Record<string, string[]> = {
+              "Frontend Developer": ["react", "angular", "vue", "css", "html", "javascript", "typescript", "frontend", "front-end", "tailwind"],
+              "Backend Developer": ["node", "express", "django", "flask", "spring", "api", "rest", "graphql", "backend", "back-end", "server"],
+              "Full Stack Developer": ["full stack", "fullstack", "full-stack", "mern", "mean"],
+              "Mobile Developer": ["react native", "flutter", "swift", "kotlin", "ios", "android", "mobile"],
+              "DevOps Engineer": ["docker", "kubernetes", "ci/cd", "aws", "azure", "gcp", "devops", "terraform", "jenkins"],
+              "UI/UX Designer": ["figma", "sketch", "ux", "ui design", "wireframe", "prototype", "user experience"],
+              "Data Analyst": ["sql", "tableau", "power bi", "excel", "data analysis", "analytics", "pandas", "statistics"],
+              "Cybersecurity": ["security", "penetration", "firewall", "vulnerability", "soc", "cybersecurity", "ethical hacking"],
+              "Product Manager": ["product manager", "roadmap", "stakeholder", "agile", "scrum", "product management"],
+              "HR Interview": ["hr", "human resources", "recruitment", "talent"],
+            };
+            return keywords[r.id]?.some((kw) => lower.includes(kw));
+          });
+          if (matched) {
+            setSelected(matched.id);
+            toast.info(`Auto-detected role: ${matched.id}`);
+          }
+        }
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to parse resume");
