@@ -20,7 +20,7 @@ export function Footer() {
         </div>
 
         <div className="mt-6 border-t border-border pt-4 text-center text-xs text-muted-foreground">
-          © {new Date().getFullYear()} MockMate AI. Practice smarter, interview better.
+          © {new Date().getFullYear()} MockMate AI. All rights reserved to Aditya Raj.
         </div>
       </div>
     </footer>
