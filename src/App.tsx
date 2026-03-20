@@ -14,6 +14,7 @@ import AuthPage from "./pages/AuthPage";
 import DashboardPage from "./pages/DashboardPage";
 import ReviewPage from "./pages/ReviewPage";
 import ProfilePage from "./pages/ProfilePage";
+import PreparePage from "./pages/PreparePage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
