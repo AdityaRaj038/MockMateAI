@@ -1,6 +1,6 @@
 import { useNavigate, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Sun, Moon, LogOut, User, BarChart3 } from "lucide-react";
+import { Sun, Moon, LogOut, User, BarChart3, BookOpen } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { useTheme } from "@/hooks/useTheme";
@@ -59,6 +59,17 @@ export function Header() {
                 >
                   <BarChart3 className="h-4 w-4" />
                   <span className="hidden sm:inline">Dashboard</span>
+                </Button>
+              )}
+              {location.pathname !== "/prepare" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate("/prepare")}
+                  className="gap-1.5"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  <span className="hidden sm:inline">Prepare</span>
                 </Button>
               )}
               <Button
