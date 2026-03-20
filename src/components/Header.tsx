@@ -61,6 +61,17 @@ export function Header() {
                   <span className="hidden sm:inline">Dashboard</span>
                 </Button>
               )}
+              {location.pathname !== "/prepare" && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => navigate("/prepare")}
+                  className="gap-1.5"
+                >
+                  <BookOpen className="h-4 w-4" />
+                  <span className="hidden sm:inline">Prepare</span>
+                </Button>
+              )}
               <Button
                 variant="ghost"
                 size="icon"
