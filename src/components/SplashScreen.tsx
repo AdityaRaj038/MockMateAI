@@ -38,7 +38,7 @@ export function SplashScreen({ onComplete }: SplashScreenProps) {
             transition={{ delay: 1, duration: 0.5 }}
             className="mt-2 text-sm text-muted-foreground"
           >
-            Practice interviews that feel real
+            Practice interviews that feels like real
           </motion.p>
         </motion.div>
         <motion.div
