@@ -10,6 +10,8 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Watermark } from "@/components/Watermark";
+import { PageTransition } from "@/components/PageTransition";
+import { FloatingParticles } from "@/components/FloatingParticles";
 import { useAuth } from "@/hooks/useAuth";
 import { extractTextFromFile } from "@/lib/resumeParser";
 import { toast } from "sonner";
@@ -134,9 +136,10 @@ export default function SetupPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <PageTransition className="relative min-h-screen overflow-hidden">
       <Watermark />
       <Header />
+      <FloatingParticles count={5} />
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(38_92%_50%/0.08),transparent)]" />
 
       <div className="relative mx-auto flex min-h-[calc(100vh-64px)] max-w-2xl flex-col items-center justify-center px-6 py-16">
@@ -288,6 +291,6 @@ export default function SetupPage() {
         </motion.div>
       </div>
       <Footer />
-    </div>
+    </PageTransition>
   );
 }

@@ -6,6 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Watermark } from "@/components/Watermark";
+import { PageTransition } from "@/components/PageTransition";
+import { FloatingParticles } from "@/components/FloatingParticles";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -89,9 +91,10 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <PageTransition className="min-h-screen flex flex-col relative">
       <Watermark />
       <Header />
+      <FloatingParticles count={5} />
       <div className="flex-1 px-4 py-8 relative z-10">
         <div className="mx-auto max-w-4xl space-y-8">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
@@ -178,6 +181,6 @@ export default function DashboardPage() {
         </div>
       </div>
       <Footer />
-    </div>
+    </PageTransition>
   );
 }
