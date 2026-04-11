@@ -1,9 +1,16 @@
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import logo from "@/assets/logo.png";
 
 export function Footer() {
   return (
-    <footer className="border-t border-border bg-card/50 backdrop-blur-sm relative z-10">
+    <motion.footer
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ duration: 0.5 }}
+      className="border-t border-border bg-card/50 backdrop-blur-sm relative z-10"
+    >
       <div className="mx-auto max-w-5xl px-6 py-8">
         <div className="flex flex-col items-center gap-6 sm:flex-row sm:justify-between">
           <Link to="/" className="flex items-center gap-2">
@@ -23,6 +30,6 @@ export function Footer() {
           © {new Date().getFullYear()} MockMate AI. All rights reserved with Aditya Raj.
         </div>
       </div>
-    </footer>
+    </motion.footer>
   );
 }

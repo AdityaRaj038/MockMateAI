@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
 import { Watermark } from "@/components/Watermark";
+import { PageTransition } from "@/components/PageTransition";
+import { FloatingParticles } from "@/components/FloatingParticles";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -49,9 +51,10 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col relative">
+    <PageTransition className="min-h-screen flex flex-col relative">
       <Watermark />
       <Header />
+      <FloatingParticles count={4} />
       <div className="flex-1 flex items-center justify-center px-4 py-12 relative z-10">
         <motion.div
           initial={{ opacity: 0, y: 20, scale: 0.95 }}
@@ -153,6 +156,6 @@ export default function AuthPage() {
         </motion.div>
       </div>
       <Footer />
-    </div>
+    </PageTransition>
   );
 }

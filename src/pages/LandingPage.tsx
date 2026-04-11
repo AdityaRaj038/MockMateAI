@@ -3,6 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { Mic, Brain, BarChart3, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
+import { PageTransition } from "@/components/PageTransition";
+import { FloatingParticles } from "@/components/FloatingParticles";
 import { Footer } from "@/components/Footer";
 import { Watermark } from "@/components/Watermark";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,9 +49,10 @@ export default function LandingPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden">
+    <PageTransition className="relative min-h-screen overflow-hidden">
       <Watermark />
       <Header />
+      <FloatingParticles count={8} />
 
       {/* Ambient glow */}
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_80%_50%_at_50%_-20%,hsl(38_92%_50%/0.12),transparent)]" />
@@ -123,6 +126,6 @@ export default function LandingPage() {
         </motion.div>
       </div>
       <Footer />
-    </div>
+    </PageTransition>
   );
 }
