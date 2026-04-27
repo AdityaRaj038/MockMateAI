@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Camera, Save, Loader2, User, Mail, Calendar } from "lucide-react";
+import { Camera, Save, Loader2, User, Mail, Calendar, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -220,6 +220,14 @@ export default function ProfilePage() {
 
           {/* Danger zone */}
           <div className="glass-card rounded-2xl p-6 border-destructive/20">
+            <Button
+              variant="outline"
+              onClick={() => navigate("/backend-settings")}
+              className="rounded-full gap-2 mb-4 w-full"
+            >
+              <Database className="h-4 w-4" />
+              Backend Settings
+            </Button>
             <h3 className="font-display font-semibold text-destructive mb-2">Account</h3>
             <p className="text-sm text-muted-foreground mb-4">
               Sign out of your account on this device.
