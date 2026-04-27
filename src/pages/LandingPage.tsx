@@ -1,4 +1,5 @@
 import { motion } from "framer-motion";
+import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mic, Brain, BarChart3, ArrowRight, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -40,6 +41,33 @@ export default function LandingPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
+  const phrases = ["that feel real.", "that build confidence.", "that get you hired."];
+  const [phraseIndex, setPhraseIndex] = useState(0);
+  const [typed, setTyped] = useState("");
+  const [deleting, setDeleting] = useState(false);
+
+  useEffect(() => {
+    const current = phrases[phraseIndex];
+    const speed = deleting ? 40 : 80;
+
+    if (!deleting && typed === current) {
+      const pause = setTimeout(() => setDeleting(true), 1800);
+      return () => clearTimeout(pause);
+    }
+    if (deleting && typed === "") {
+      setDeleting(false);
+      setPhraseIndex((i) => (i + 1) % phrases.length);
+      return;
+    }
+
+    const t = setTimeout(() => {
+      setTyped((prev) =>
+        deleting ? current.slice(0, prev.length - 1) : current.slice(0, prev.length + 1)
+      );
+    }, speed);
+    return () => clearTimeout(t);
+  }, [typed, deleting, phraseIndex]);
+
   const handleStart = () => {
     if (user) {
       navigate("/setup");
@@ -77,7 +105,8 @@ export default function LandingPage() {
           <h1 className="font-display text-5xl font-bold leading-tight tracking-tight sm:text-7xl">
             Practice interviews
             <br />
-            <span className="text-gradient">that feel real.</span>
+            <span className="text-gradient">{typed}</span>
+            <span className="inline-block w-[3px] h-[0.9em] align-[-0.1em] ml-1 bg-primary animate-pulse" />
           </h1>
 
           <p className="mx-auto max-w-xl text-lg text-muted-foreground">
