@@ -16,6 +16,7 @@ import DashboardPage from "./pages/DashboardPage";
 import ReviewPage from "./pages/ReviewPage";
 import ProfilePage from "./pages/ProfilePage";
 import PreparePage from "./pages/PreparePage";
+import BackendSettingsPage from "./pages/BackendSettingsPage";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ function AnimatedRoutes() {
         <Route path="/profile" element={<ProfilePage />} />
         <Route path="/review/:id" element={<ReviewPage />} />
         <Route path="/prepare" element={<PreparePage />} />
+        <Route path="/backend-settings" element={<BackendSettingsPage />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
     </AnimatePresence>

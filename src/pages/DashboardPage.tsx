@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, Trophy, Target, Clock, TrendingUp, Flame } from "lucide-react";
+import { ArrowRight, Trophy, Target, Clock, TrendingUp, Flame, Download } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Header } from "@/components/Header";
 import { Footer } from "@/components/Footer";
@@ -9,7 +9,8 @@ import { Watermark } from "@/components/Watermark";
 import { PageTransition } from "@/components/PageTransition";
 import { FloatingParticles } from "@/components/FloatingParticles";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
+import { getSupabase } from "@/integrations/supabase/customClient";
+import { toast } from "sonner";
 
 interface InterviewRecord {
   id: string;
@@ -35,12 +36,42 @@ export default function DashboardPage() {
   }, [user, authLoading]);
 
   const fetchHistory = async () => {
-    const { data } = await supabase
+    const { data } = await getSupabase()
       .from("interview_history")
       .select("*")
       .order("created_at", { ascending: false });
     setInterviews((data as InterviewRecord[]) || []);
     setLoading(false);
+  };
+
+  const exportCSV = () => {
+    if (!interviews.length) {
+      toast.error("No interviews to export yet");
+      return;
+    }
+    const escape = (v: unknown) => {
+      const s = String(v ?? "");
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const headers = ["Date", "Role", "Average Score", "Total Questions", "Feedback Summary"];
+    const rows = interviews.map((i) => [
+      new Date(i.created_at).toISOString(),
+      i.role,
+      Number(i.average_score).toFixed(2),
+      i.total_questions,
+      JSON.stringify(i.feedbacks ?? []),
+    ]);
+    const csv = [headers, ...rows].map((r) => r.map(escape).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `interview-history-${new Date().toISOString().slice(0, 10)}.csv`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+    toast.success("Downloaded interview history");
   };
 
   const overallAvg = interviews.length
@@ -126,10 +157,23 @@ export default function DashboardPage() {
             ))}
           </motion.div>
 
-          {/* Start new */}
-          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 0.3 }}>
+          {/* Actions */}
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.3 }}
+            className="flex flex-wrap gap-3"
+          >
             <Button onClick={() => navigate("/setup")} className="gap-2 rounded-full px-6 font-semibold">
               Start New Interview <ArrowRight className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="outline"
+              onClick={exportCSV}
+              disabled={!interviews.length}
+              className="gap-2 rounded-full px-6 font-semibold"
+            >
+              <Download className="h-4 w-4" /> Export CSV
             </Button>
           </motion.div>
 
