@@ -1,0 +1,7 @@
+project_id = "gqwotbtzqrpxikgfatwo"
+
+[functions.interview]
+verify_jwt = false
+
+[functions.prepare]
+verify_jwt = false
