@@ -6,10 +6,17 @@ export function Watermark() {
       src={logo}
       alt=""
       className="
-        h-[42vh]
-        w-[42vh]
-        max-h-[420px]
-        max-w-[420px]
+        pointer-events-none
+        absolute
+        left-1/2
+        top-1/2
+        z-0
+        h-[30vh]
+        w-[30vh]
+        max-h-[280px]
+        max-w-[280px]
+        -translate-x-1/2
+        -translate-y-1/2
         opacity-10
         blur-[2px]
         select-none
