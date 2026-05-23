@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { functionsClient as supabase } from "@/integrations/supabase/functionsClient";
 
 export interface PracticeQuestion {
   question: string;
