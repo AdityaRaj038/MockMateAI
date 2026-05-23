@@ -50,10 +50,26 @@
     --sidebar-border: 222 30% 18%;
     --sidebar-ring: 38 92% 50%;
 
-    --gradient-hero: linear-gradient(135deg, hsl(38 92% 50%) 0%, hsl(28 100% 55%) 100%);
-    --gradient-surface: linear-gradient(180deg, hsl(222 47% 9%) 0%, hsl(222 47% 6%) 100%);
-    --gradient-glow: radial-gradient(600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), hsl(38 92% 50% / 0.06), transparent 40%);
+    --gradient-hero: linear-gradient(
+      135deg,
+      hsl(38 92% 50%) 0%,
+      hsl(28 100% 55%) 100%
+    );
+
+    --gradient-surface: linear-gradient(
+      180deg,
+      hsl(222 47% 9%) 0%,
+      hsl(222 47% 6%) 100%
+    );
+
+    --gradient-glow: radial-gradient(
+      600px circle at var(--mouse-x, 50%) var(--mouse-y, 50%),
+      hsl(38 92% 50% / 0.06),
+      transparent 40%
+    );
+
     --shadow-glow: 0 0 40px -10px hsl(38 92% 50% / 0.3);
+
     --shadow-card: 0 4px 24px -4px hsl(222 47% 4% / 0.5);
   }
 
@@ -87,22 +103,28 @@
     --ring: 38 92% 50%;
 
     --shadow-glow: 0 0 40px -10px hsl(38 92% 50% / 0.15);
+
     --shadow-card: 0 4px 24px -4px hsl(220 14% 80% / 0.3);
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
 
   body {
     @apply bg-background text-foreground font-body antialiased;
-    transition: background-color 0.3s ease, color 0.3s ease;
+    transition:
+      background-color 0.3s ease,
+      color 0.3s ease;
   }
 
-  h1, h2, h3, h4, h5, h6 {
-    font-family: 'Space Grotesk', sans-serif;
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    font-family: "Space Grotesk", sans-serif;
   }
 }
 
@@ -117,22 +139,38 @@
   }
 
   .glass-card {
-    @apply bg-card/80 backdrop-blur-xl border border-border/50;
+    background-color: hsl(var(--card) / 0.8);
+    @apply backdrop-blur-xl border border-border;
     box-shadow: var(--shadow-card);
   }
 
   @keyframes pulse-ring {
-    0% { transform: scale(1); opacity: 0.6; }
-    100% { transform: scale(1.8); opacity: 0; }
+    0% {
+      transform: scale(1);
+      opacity: 0.6;
+    }
+
+    100% {
+      transform: scale(1.8);
+      opacity: 0;
+    }
   }
 
   @keyframes float {
-    0%, 100% { transform: translateY(0); }
-    50% { transform: translateY(-8px); }
+    0%,
+    100% {
+      transform: translateY(0);
+    }
+
+    50% {
+      transform: translateY(-8px);
+    }
   }
 
   .animate-pulse-ring {
-    animation: pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    animation:
+      pulse-ring 1.5s cubic-bezier(0.4, 0, 0.6, 1)
+      infinite;
   }
 
   .animate-float {
